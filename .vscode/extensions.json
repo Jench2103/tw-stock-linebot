@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "EditorConfig.EditorConfig",
+    "ms-python.python",
+    "tamasfe.even-better-toml",
+    "yzhang.markdown-all-in-one",
+    "qwtel.sqlite-viewer"
+  ]
+}
