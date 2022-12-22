@@ -2,7 +2,7 @@ from typing import Union, Dict, List
 
 from flask import request, abort
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
 from linebot.models.events import Event
 from linebot.webhook import WebhookPayload
 
@@ -32,21 +32,32 @@ def callback():
         raise RuntimeError
 
     for event in events:
-        if not isinstance(event, MessageEvent):
-            continue
-        if not isinstance(event.message, TextMessage):
-            continue
-        if not isinstance(event.message.text, str):
-            continue
-        if event.source.user_id not in user_machines:
-            user_machines[event.source.user_id] = LinebotMachine()
-            print('A LinebotMachine is created for User {}'.format(event.source.user_id))
+        if isinstance(event, MessageEvent) and \
+                isinstance(event.message, TextMessage) and \
+                isinstance(event.message.text, str):
+            if event.source.user_id not in user_machines:
+                user_machines[event.source.user_id] = LinebotMachine()
+                print('A LinebotMachine is created for User {}'.format(event.source.user_id))
 
-        response = user_machines[event.source.user_id].advance(event)
-        print('User {} → {}'.format(event.source.user_id, user_machines[event.source.user_id].state))
+            response = user_machines[event.source.user_id].advance(event)
+            print('User {} → {}'.format(event.source.user_id, user_machines[event.source.user_id].state))
 
-        if response == False:
-            message: str = '很抱歉不太理解您的意思，但我依然會當個忠實的聽眾唷'
-            line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message))
+            if response == False:
+                message: str = '很抱歉不太理解您的意思，但我依然會當個忠實的聽眾唷'
+                line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message))
+
+        elif isinstance(event, FollowEvent):
+            if event.source.user_id not in user_machines:
+                user_machines[event.source.user_id] = LinebotMachine()
+                print('A LinebotMachine is created for User {}'.format(event.source.user_id))
+            template_message: TemplateSendMessage = TemplateSendMessage(
+                alt_text='Buttons template',
+                template=ButtonsTemplate(
+                    title='股市追蹤小幫手',
+                    text='歡迎使用股市追蹤小幫手！請選擇一項功能',
+                    actions=user_machines[event.source.user_id].create_main_menu()
+                )
+            )
+            line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
 
     return 'OK'

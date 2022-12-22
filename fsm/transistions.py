@@ -16,4 +16,10 @@ TRANSITIONS: List[Dict[str, str]] = [
     {'trigger': 'advance', 'source': 'delete_stock', 'dest': 'delete_stock_operation', 'conditions': 'is_going_to_delete_stock_operation'},
     {'trigger': 'advance', 'source': 'delete_stock_operation', 'dest': 'delete_stock_operation', 'conditions': 'is_going_to_delete_stock_operation'},
     {'trigger': 'advance', 'source': 'delete_stock_operation', 'dest': 'stock_mgr', 'conditions': 'is_going_to_stock_mgr'},
+    # Stock Lookup
+    {'trigger': 'advance', 'source': 'init', 'dest': 'stock_lookup', 'conditions': 'is_going_to_stock_lookup'},
+    {'trigger': 'advance', 'source': 'stock_lookup', 'dest': 'search_resp', 'conditions': 'is_going_to_search_resp'},
+    {'trigger': 'advance', 'source': 'search_resp', 'dest': 'search_resp', 'conditions': 'is_going_to_search_resp'},
+    {'trigger': 'advance', 'source': 'search_resp', 'dest': 'init', 'conditions': 'is_going_to_init'},
+    {'trigger': 'advance', 'source': 'stock_lookup', 'dest': 'init', 'conditions': 'is_going_to_init'},
 ]   # yapf: disable

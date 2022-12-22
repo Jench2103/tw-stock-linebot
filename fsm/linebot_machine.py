@@ -1,4 +1,4 @@
-from typing import Union, Union, Set, Dict, List
+from typing import Union, Set, Dict, List
 
 from transitions import Machine
 from linebot.models import MessageEvent, TextSendMessage, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
@@ -27,14 +27,32 @@ class LinebotMachine(Machine):
         )
         self.stock_set: Set[str] = set()
 
+    def create_main_menu(self) -> List[MessageTemplateAction]:
+        options: List[MessageTemplateAction] = [
+            MessageTemplateAction(label='管理我收藏的股票', text='管理收藏股票'),
+            MessageTemplateAction(label='查詢股票', text='查詢股票')
+        ]
+        return options
+
     def is_going_to_init(self, event: MessageEvent) -> bool:
         if self.state == 'stock_mgr':
             return event.message.text == '離開'
+        elif self.state == 'stock_lookup':
+            return event.message.text == '取消'
+        elif self.state == 'search_resp':
+            return event.message.text == '退出'
         return False
+
+    def on_enter_init(self, event: MessageEvent) -> None:
+        template_message: TemplateSendMessage = TemplateSendMessage(
+            alt_text='Buttons template',
+            template=ButtonsTemplate(title='股市追蹤小幫手', text='請選擇一項功能', actions=self.create_main_menu())
+        )
+        line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
 
     def is_going_to_stock_mgr(self, event: MessageEvent) -> bool:
         if self.state == 'init':
-            return event.message.text == '管理我的股票'
+            return event.message.text == '管理收藏股票'
         elif self.state == 'add_stock_operation' or self.state == 'delete_stock_operation':
             return event.message.text == '結束'
         print('execute: is_going_to_stock_mgr()')
@@ -104,3 +122,36 @@ class LinebotMachine(Machine):
         else:
             text_message: str = '該檔股票未被儲存、或查無該股票代號，請確認後重新輸入，或輸入「結束」返回股票管理選單，謝謝'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=text_message))
+
+    def is_going_to_stock_lookup(self, event: MessageEvent) -> bool:
+        if self.state == 'init':
+            return event.message.text == '查詢股票'
+        return False
+
+    def on_enter_stock_lookup(self, event: MessageEvent) -> None:
+        message_text: str = '請輸入股票代號以查詢其名稱，或輸入簡稱查詢股票代號；如欲取消請輸入「取消」'
+        line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))
+
+    def is_going_to_search_resp(self, event: MessageEvent) -> bool:
+        if self.state == 'stock_lookup':
+            return event.message.text != '取消'
+        elif self.state == 'search_resp':
+            return event.message.text != '退出'
+
+        return False
+
+    def on_enter_search_resp(self, event: MessageEvent) -> None:
+        token: str = event.message.text
+        message_text: str = '如欲查詢下一筆資料請繼續輸入，或傳送「退出」回到主選單喔'
+
+        result_name: Union[str, None] = StockInfo.get_name(token)
+        result_id: Union[str, None] = StockInfo.get_id(token)
+
+        if result_id != None:
+            message_text = '「{}」的代號是「{}」，'.format(token, result_id) + message_text
+        elif result_name != None:
+            message_text = '「{}」的名稱是「{}」，'.format(token, result_name) + message_text
+        else:
+            message_text = '很抱歉查無資訊🥲\n' + message_text
+
+        line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))
