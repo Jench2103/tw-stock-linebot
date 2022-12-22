@@ -1,4 +1,4 @@
-from typing import Union, Any, Dict, List
+from typing import Any, Dict, List
 import requests
 
 
@@ -27,27 +27,3 @@ class TWSE():
                 raise RuntimeError("The stock ID is invalid")
 
             return price
-
-        @staticmethod
-        def get_daily_info(stock_id: str) -> Dict[str, Union[str, float]]:
-
-            try:
-                response: requests.Response = requests.get(
-                    'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL'
-                )
-                data: List[Dict[str, str]] = response.json()
-                target: Dict[str, str] = next(item for item in data if item["Code"] == stock_id)
-                result: Dict[str, Union[str, float]] = {
-                    "Name": target['Name'],
-                    "TradeVolume": float(target['TradeVolume']),
-                    "TradeValue": float(target['TradeValue']),
-                    "OpeningPrice": float(target['OpeningPrice']),
-                    "HighestPrice": float(target['HighestPrice']),
-                    "LowestPrice": float(target['LowestPrice']),
-                    "ClosingPrice": float(target['ClosingPrice']),
-                    "Change": float(target['Change'])
-                }
-            except:
-                raise RuntimeError("The stock ID is invalid")
-
-            return result

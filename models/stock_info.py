@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union, Dict, List
 from datetime import datetime
 
-from stock_api import TWSE
+from stock_api import FinMind
 
 from models import DatabaseManager, db
 
@@ -13,17 +13,19 @@ class StockInfo(db.Model):    # type: ignore
 
     _id = db.Column(db.Integer, primary_key=True)
     _stock_id = db.Column(db.String, nullable=False, unique=True)
-    _short_name = db.Column(db.String, nullable=False, unique=True)
-    _full_name = db.Column(db.String, nullable=False, unique=True)
+    _stock_name = db.Column(db.String, nullable=False, unique=False)
+    _industry = db.Column(db.String, nullable=False, unique=False)
+    _type = db.Column(db.String, nullable=False, unique=False)
 
-    def __init__(self, stock_id: str, short_name: str, full_name: str) -> None:
+    def __init__(self, stock_id: str, stock_name: str, industry: str, type: str) -> None:
         self._stock_id = stock_id
-        self._short_name = short_name
-        self._full_name = full_name
+        self._stock_name = stock_name
+        self._industry = industry
+        self._type = type
 
     def __repr__(self) -> str:
         return '<StockInfo[{id}]: {stock_id} {short_name}>'.format(
-            id=self.id, stock_id=self.stock_id, short_name=self.short_name
+            id=self.id, stock_id=self.stock_id, short_name=self.stock_name
         )
 
     @property
@@ -41,28 +43,38 @@ class StockInfo(db.Model):    # type: ignore
         return self.stock_id
 
     @property
-    def short_name(self) -> str:
-        return self._short_name
+    def stock_name(self) -> str:
+        return self._stock_name
 
-    @short_name.setter
-    def short_name(self, value: str) -> str:
-        self._short_name = value
+    @stock_name.setter
+    def stock_name(self, value: str) -> str:
+        self._stock_name = value
         DatabaseManager.update()
-        return self.short_name
+        return self.stock_name
 
     @property
-    def full_name(self) -> str:
-        return self._full_name
+    def industry(self) -> str:
+        return self._industry
 
-    @full_name.setter
-    def full_name(self, value: str) -> str:
-        self._full_name = value
+    @industry.setter
+    def industry(self, value: str) -> str:
+        self._industry = value
         DatabaseManager.update()
-        return self.full_name
+        return self.industry
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, value: str) -> str:
+        self._type = value
+        DatabaseManager.update()
+        return self.type
 
     @classmethod
-    def create(cls, stock_id: str, short_name: str, full_name: str) -> StockInfo:
-        stock_info: StockInfo = cls(stock_id, short_name, full_name)
+    def create(cls, stock_id: str, stock_name: str, industry: str, type: str) -> StockInfo:
+        stock_info: StockInfo = cls(stock_id, stock_name, industry, type)
         if not DatabaseManager.create(stock_info):
             raise RuntimeError
         return stock_info
@@ -75,11 +87,16 @@ class StockInfo(db.Model):    # type: ignore
         if history != None and not history.is_expired(days=7):
             return False
 
-        twse_stock_info: List[Dict[str, str]] = TWSE.OpenData.get_listed_company()
+        stock_info: List[Dict[str, str]] = FinMind.stock_info()
         cls.clean()
 
-        for entry in twse_stock_info:
-            cls.create(stock_id=entry['公司代號'], short_name=entry['公司簡稱'], full_name=entry['公司名稱'])
+        for entry in stock_info:
+            cls.create(
+                stock_id=entry['stock_id'],
+                stock_name=entry['stock_name'],
+                industry=entry['industry_category'],
+                type=entry['type']
+            )
 
         if history != None:
             history.datetime = datetime.now()
@@ -92,14 +109,14 @@ class StockInfo(db.Model):    # type: ignore
     def get_name(cls, stock_id: str) -> Union[str, None]:
         try:
             stock_info: StockInfo = cls.query.filter_by(_stock_id=stock_id).first()
-            return stock_info.short_name
+            return stock_info.stock_name
         except:
             return None
 
     @classmethod
-    def get_id(cls, short_name: str) -> Union[str, None]:
+    def get_id(cls, stock_name: str) -> Union[str, None]:
         try:
-            stock_info: StockInfo = cls.query.filter_by(_short_name=short_name).first()
+            stock_info: StockInfo = cls.query.filter_by(_stock_name=stock_name).first()
             return stock_info.stock_id
         except:
             return None
