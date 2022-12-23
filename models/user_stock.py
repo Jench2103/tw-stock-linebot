@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, List
+
 from models import DatabaseManager, db
 
 

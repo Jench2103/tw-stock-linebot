@@ -35,6 +35,9 @@ class LinebotMachine(Machine):
         ]
         return options
 
+    def repeat_current_state(self, event: MessageEvent) -> None:
+        pass
+
     def is_going_to_init(self, event: MessageEvent) -> bool:
         if self.state == 'stock_mgr' or self.state == 'list_stocks':
             return event.message.text == '離開'
@@ -125,7 +128,7 @@ class LinebotMachine(Machine):
 
         if UserStock.delete(userid=event.source.user_id, stock_id=stock_id):
             stock_info: StockInfo = StockInfo.query.filter_by(_stock_id=stock_id).first()
-            text_message: str = '{} 刪除成功！歡迎繼續輸入ID刪除股票，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.stock_name)
+            text_message: str = '{} 刪除成功！歡迎繼續輸入股票代號以將其刪除，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.stock_name)
         else:
             text_message: str = '該檔股票未被儲存、或查無該股票代號，請確認後重新輸入，或輸入「結束」返回股票管理選單，謝謝'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=text_message))
