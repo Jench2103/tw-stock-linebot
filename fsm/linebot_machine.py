@@ -30,7 +30,7 @@ class LinebotMachine(Machine):
     def create_main_menu(self) -> List[MessageTemplateAction]:
         options: List[MessageTemplateAction] = [
             MessageTemplateAction(label='管理我收藏的股票', text='管理收藏股票'),
-            MessageTemplateAction(label='查詢股票', text='查詢股票')
+            MessageTemplateAction(label='股票名稱代號翻譯', text='股票名稱代號翻譯')
         ]
         return options
 
@@ -93,7 +93,7 @@ class LinebotMachine(Machine):
         stock_info: Union[StockInfo, None] = StockInfo.query.filter_by(_stock_id=stock_id).first()
         if stock_info != None:
             self.stock_set.add(stock_id)
-            text_message: str = '{} 新增成功！歡迎繼續輸入ID新增股票，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.short_name)
+            text_message: str = '{} 新增成功！歡迎繼續輸入ID新增股票，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.stock_name)
         else:
             text_message: str = '查無該股票代號，請確認後重新輸入ID，或輸入「結束」返回股票管理選單，謝謝'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=text_message))
@@ -118,14 +118,28 @@ class LinebotMachine(Machine):
         if stock_id in self.stock_set:
             stock_info: StockInfo = StockInfo.query.filter_by(_stock_id=stock_id).first()
             self.stock_set.remove(stock_id)
-            text_message: str = '{} 刪除成功！歡迎繼續輸入ID刪除股票，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.short_name)
+            text_message: str = '{} 刪除成功！歡迎繼續輸入ID刪除股票，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.stock_name)
         else:
             text_message: str = '該檔股票未被儲存、或查無該股票代號，請確認後重新輸入，或輸入「結束」返回股票管理選單，謝謝'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=text_message))
 
+    def is_going_to_list_stocks(self, event: MessageEvent) -> bool:
+        return event.message.text == '查看已儲存清單'
+
+    def on_enter_list_stocks(self, event: MessageEvent) -> None:
+        message_text: str = '您已儲存的股票包括：\n'
+        stock_list: List[str] = sorted(list(self.stock_set))
+        for index in range(len(stock_list)):
+            message_text += '\n{idx}. {stock_id} {stock_name}'.format(
+                idx=index + 1, stock_id=stock_list[index], stock_name=StockInfo.get_name(stock_list[index])
+            )
+        message_text += '\n\n請繼續利用「股票管理」功能選單進行操作，謝謝！'
+        line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))
+        self.state = 'stock_mgr'
+
     def is_going_to_stock_lookup(self, event: MessageEvent) -> bool:
         if self.state == 'init':
-            return event.message.text == '查詢股票'
+            return event.message.text == '股票名稱代號翻譯'
         return False
 
     def on_enter_stock_lookup(self, event: MessageEvent) -> None:
