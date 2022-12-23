@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Union, Any, Dict, List
 import requests
 
 
@@ -15,15 +15,14 @@ class TWSE():
 
     class ExchangeReport():
         @staticmethod
-        def get_current_price(stock_id: str) -> float:
+        def get_current_price(stock_id: str) -> Union[float, None]:
             try:
                 response: requests.Response = requests.get(
                     'https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{}.tw&json=1&delay=0'.
                     format(stock_id)
                 )
                 data: Dict[str, Any] = response.json()
-                price: float = float(data['msgArray'][0]['z'])
-            except:
-                raise RuntimeError("The stock ID is invalid")
+                return float(data['msgArray'][0]['z'])
 
-            return price
+            except:
+                return None

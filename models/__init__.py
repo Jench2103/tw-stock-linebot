@@ -30,3 +30,4 @@ class DatabaseManager():
 
 from .stock_info import StockInfo
 from .data_update_history import DataUpdateHistory
+from .user_stock import UserStock
