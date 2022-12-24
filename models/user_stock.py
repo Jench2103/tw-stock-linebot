@@ -70,7 +70,7 @@ class UserStock(db.Model):    # type: ignore
             entry: UserStock
             result.append(entry.stock_id)
 
-        return result
+        return sorted(result)
 
     @classmethod
     def delete_user(cls, userid: str) -> None:

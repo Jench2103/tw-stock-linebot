@@ -144,7 +144,7 @@ class LinebotMachine(Machine):
                 message_text += '\n{idx}. {stock_id} {stock_name}'.format(
                     idx=index + 1, stock_id=stock_list[index], stock_name=StockInfo.get_name(stock_list[index])
                 )
-                message_text += '\n\n請繼續利用「股票管理」功能選單進行操作，謝謝！'
+            message_text += '\n\n請繼續利用「股票管理」功能選單進行操作，謝謝！'
         else:
             message_text = '您還沒有收藏任何股票，趕快利用下列選單的功能告訴我想關注哪些股票吧！'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))

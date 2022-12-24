@@ -12,7 +12,7 @@ db = SQLAlchemy(app)
 
 app.app_context().push()
 
-line_bot_api = LineBotApi(CONFIG['line_developer']['channel_access_token'])
+line_bot_api = LineBotApi(CONFIG['line_developer']['channel_access_token'], timeout=3000)
 parser = WebhookParser(CONFIG['line_developer']['channel_secret'])
 
 from . import entrypoint
