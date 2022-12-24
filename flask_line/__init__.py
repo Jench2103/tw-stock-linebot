@@ -4,14 +4,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from linebot import LineBotApi, WebhookParser
 
-from config import BASE_DIR, CONFIG
-
-DATABASE_DIR: str = os.path.join(BASE_DIR, 'data')
-DATABASE_PATH: str = os.path.join(DATABASE_DIR, 'data.sqlite')
-
-for directory in [DATABASE_DIR]:
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
+from config import CONFIG, DATABASE_PATH
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DATABASE_PATH

@@ -1,6 +1,6 @@
 from typing import Union, Dict, List
 
-from flask import request, abort
+from flask import request, abort, send_file
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, UnfollowEvent, TemplateSendMessage, ButtonsTemplate
 from linebot.models.events import Event
@@ -74,3 +74,9 @@ def callback():
             print('User {} has been deleted from my database.'.format(event.source.user_id))
 
     return 'OK'
+
+
+@app.route('/show-fsm-graph', methods=['GET'])
+def show_fsm_graph():
+    dump_path: str = LinebotMachine.create_fsm_graph()
+    return send_file(dump_path, mimetype='image/png')

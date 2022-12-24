@@ -1,11 +1,14 @@
-from typing import Union, Set, Dict, List
+from typing import Union, Dict, List
+import os
 
 from transitions import Machine
 from linebot.models import MessageEvent, TextSendMessage, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
+from transitions.extensions.diagrams import GraphMachine
 
 from .states import STATES, INIT_STATE
 from .transistions import TRANSITIONS
 
+from config import DATABASE_DIR
 from flask_line import line_bot_api
 from models import StockInfo, UserStock
 from stock_api import TWSE, FinMind
@@ -276,3 +279,17 @@ class LinebotMachine(Machine):
 
         template_message: TemplateSendMessage = self.create_info_query_menu(menu_title='繼續查詢', menu_text='您還想知道哪些情報呢')
         line_bot_api.push_message(to=event.source.user_id, messages=template_message)
+
+    @staticmethod
+    def create_fsm_graph() -> str:
+        graph_machine = GraphMachine(
+            title='Linebot Machine',
+            model=Machine.self_literal,
+            states=STATES,
+            initial=INIT_STATE,
+            transitions=TRANSITIONS,
+            show_conditions=True
+        )
+        dump_path: str = os.path.join(DATABASE_DIR, 'fsm.png')
+        graph_machine.get_graph().draw(dump_path, prog='dot', format='png')
+        return dump_path
