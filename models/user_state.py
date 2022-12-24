@@ -40,6 +40,9 @@ class UserState(db.Model):    # type: ignore
         DatabaseManager.update()
         return self.state
 
+    def delete(self) -> bool:
+        return DatabaseManager.delete(self)
+
     @classmethod
     def create(cls, userid: str, state: str) -> UserState:
         user_state: Union[UserState, None] = UserState.query.filter_by(_userid=userid).first()
@@ -62,3 +65,11 @@ class UserState(db.Model):    # type: ignore
             user_state.state = state
         else:
             cls.create(userid=userid, state=state)
+
+    @classmethod
+    def delete_user(cls, userid: str) -> bool:
+        user_state: Union[UserState, None] = cls.query.filter_by(_userid=userid).first()
+        if user_state != None:
+            return user_state.delete()
+        else:
+            return False

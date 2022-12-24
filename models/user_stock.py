@@ -40,9 +40,12 @@ class UserStock(db.Model):    # type: ignore
         DatabaseManager.update()
         return self.stock_id
 
+    def delete(self) -> bool:
+        return DatabaseManager.delete(self)
+
     @classmethod
     def create(cls, userid: str, stock_id: str) -> UserStock:
-        user_stock: Union[UserStock, None] = UserStock.query.filter_by(_userid=userid, _stock_id=stock_id).first()
+        user_stock: Union[UserStock, None] = cls.query.filter_by(_userid=userid, _stock_id=stock_id).first()
         if user_stock != None:
             return user_stock
         else:
@@ -52,11 +55,10 @@ class UserStock(db.Model):    # type: ignore
             return user_stock
 
     @classmethod
-    def delete(cls, userid: str, stock_id: str) -> bool:
-        user_stock: Union[UserStock, None] = UserStock.query.filter_by(_userid=userid, _stock_id=stock_id).first()
+    def delete_entry(cls, userid: str, stock_id: str) -> bool:
+        user_stock: Union[UserStock, None] = cls.query.filter_by(_userid=userid, _stock_id=stock_id).first()
         if user_stock != None:
-            DatabaseManager.delete(user_stock)
-            return True
+            return user_stock.delete()
         else:
             return False
 
@@ -64,8 +66,14 @@ class UserStock(db.Model):    # type: ignore
     def get_user_stock(cls, userid: str) -> List[str]:
         result: List[str] = []
 
-        for entry in (UserStock.query.filter_by(_userid=userid).all() or []):
+        for entry in (cls.query.filter_by(_userid=userid).all() or []):
             entry: UserStock
             result.append(entry.stock_id)
 
         return result
+
+    @classmethod
+    def delete_user(cls, userid: str) -> None:
+        for entry in (cls.query.filter_by(_userid=userid).all() or []):
+            entry: UserStock
+            entry.delete()

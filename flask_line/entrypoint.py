@@ -2,13 +2,13 @@ from typing import Union, Dict, List
 
 from flask import request, abort
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, TemplateSendMessage, ButtonsTemplate, MessageTemplateAction
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, UnfollowEvent, TemplateSendMessage, ButtonsTemplate
 from linebot.models.events import Event
 from linebot.webhook import WebhookPayload
 
 from flask_line import app, line_bot_api, parser
 from fsm import LinebotMachine
-from models import UserState
+from models import UserState, UserStock
 
 user_machines: Dict[str, LinebotMachine] = dict()
 
@@ -69,5 +69,11 @@ def callback():
                 )
             )
             line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
+
+        elif isinstance(event, UnfollowEvent):
+            user_machines.pop(event.source.user_id, None)
+            UserState.delete_user(userid=event.source.user_id)
+            UserStock.delete_user(userid=event.source.user_id)
+            print('User {} has been deleted from my database.'.format(event.source.user_id))
 
     return 'OK'
