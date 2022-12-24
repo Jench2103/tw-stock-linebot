@@ -35,9 +35,6 @@ class LinebotMachine(Machine):
         ]
         return options
 
-    def repeat_current_state(self, event: MessageEvent) -> None:
-        pass
-
     def is_going_to_init(self, event: MessageEvent) -> bool:
         if self.state == 'stock_mgr' or self.state == 'list_stocks':
             return event.message.text == '離開'
@@ -51,7 +48,7 @@ class LinebotMachine(Machine):
 
     def on_enter_init(self, event: MessageEvent) -> None:
         template_message: TemplateSendMessage = TemplateSendMessage(
-            alt_text='Buttons template',
+            alt_text='股市追蹤 - 主選單',
             template=ButtonsTemplate(title='股市追蹤小幫手', text='請選擇一項功能', actions=self.create_main_menu())
         )
         line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
@@ -59,7 +56,7 @@ class LinebotMachine(Machine):
     # Stock Manager
     def create_stock_mgr_menu(self, menu_title: str, menu_text: str) -> TemplateSendMessage:
         template_message: TemplateSendMessage = TemplateSendMessage(
-            alt_text='Buttons template',
+            alt_text='收藏股票管理 - 功能選單',
             template=ButtonsTemplate(
                 title=menu_title,
                 text=menu_text,
@@ -126,7 +123,7 @@ class LinebotMachine(Machine):
     def on_enter_delete_stock_operation(self, event: MessageEvent) -> None:
         stock_id: str = event.message.text
 
-        if UserStock.delete(userid=event.source.user_id, stock_id=stock_id):
+        if UserStock.delete_entry(userid=event.source.user_id, stock_id=stock_id):
             stock_info: StockInfo = StockInfo.query.filter_by(_stock_id=stock_id).first()
             text_message: str = '{} 刪除成功！歡迎繼續輸入股票代號以將其刪除，或輸入「結束」返回股票管理選單，謝謝'.format(stock_info.stock_name)
         else:
@@ -137,13 +134,16 @@ class LinebotMachine(Machine):
         return event.message.text == '查看已儲存清單'
 
     def on_enter_list_stocks(self, event: MessageEvent) -> None:
-        message_text: str = '您已儲存的股票包括：\n'
         stock_list: List[str] = UserStock.get_user_stock(userid=event.source.user_id)
-        for index in range(len(stock_list)):
-            message_text += '\n{idx}. {stock_id} {stock_name}'.format(
-                idx=index + 1, stock_id=stock_list[index], stock_name=StockInfo.get_name(stock_list[index])
-            )
-        message_text += '\n\n請繼續利用「股票管理」功能選單進行操作，謝謝！'
+        if len(stock_list) > 0:
+            message_text: str = '您已儲存的股票包括：\n'
+            for index in range(len(stock_list)):
+                message_text += '\n{idx}. {stock_id} {stock_name}'.format(
+                    idx=index + 1, stock_id=stock_list[index], stock_name=StockInfo.get_name(stock_list[index])
+                )
+                message_text += '\n\n請繼續利用「股票管理」功能選單進行操作，謝謝！'
+        else:
+            message_text = '您還沒有收藏任何股票，趕快利用下列選單的功能告訴我想關注哪些股票吧！'
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))
 
         template_message: TemplateSendMessage = self.create_stock_mgr_menu(menu_title='股票管理', menu_text='點選「離開」即可返回主選單')
@@ -183,9 +183,9 @@ class LinebotMachine(Machine):
         line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message_text))
 
     # Info Query
-    def create_info_query_menu(self, menu_title: str, menu_text: str) -> TemplateSendMessage:
+    def create_info_query_menu(self, menu_title: str, menu_text: str, leave_only: bool = False) -> TemplateSendMessage:
         template_message: TemplateSendMessage = TemplateSendMessage(
-            alt_text='Buttons template',
+            alt_text='最新資訊查詢 - 功能選單',
             template=ButtonsTemplate(
                 title=menu_title,
                 text=menu_text,
@@ -194,7 +194,7 @@ class LinebotMachine(Machine):
                     MessageTemplateAction(label='當日成交資訊', text='當日成交資訊'),
                     MessageTemplateAction(label='除權息資訊', text='除權息資訊'),
                     MessageTemplateAction(label='離開', text='離開')
-                ]
+                ] if not leave_only else [MessageTemplateAction(label='離開', text='離開')]
             )
         )
         return template_message
@@ -203,10 +203,17 @@ class LinebotMachine(Machine):
         return event.message.text == '查詢收藏股票最新資訊'
 
     def on_enter_info_query(self, event: MessageEvent) -> None:
-        template_message: TemplateSendMessage = self.create_info_query_menu(
-            menu_title='取得最新資訊', menu_text='收藏股票的最新狀態，從此一手掌握！'
-        )
-        line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
+        stock_list: List[str] = UserStock.get_user_stock(userid=event.source.user_id)
+        if len(stock_list) > 0:
+            template_message: TemplateSendMessage = self.create_info_query_menu(
+                menu_title='取得最新資訊', menu_text='收藏股票的最新狀態，從此一手掌握！'
+            )
+            line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
+        else:
+            template_message: TemplateSendMessage = self.create_info_query_menu(
+                menu_title='取得最新資訊', menu_text='您還沒有收藏任何股票，趕快回到主選單利用管理收藏股票的功能讓我知道您想關注哪些股票吧！', leave_only=True
+            )
+            line_bot_api.reply_message(reply_token=event.reply_token, messages=template_message)
 
     def is_going_to_current_price(self, event: MessageEvent) -> bool:
         return event.message.text == '最新價格'

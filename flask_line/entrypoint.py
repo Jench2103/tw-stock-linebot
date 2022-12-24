@@ -44,16 +44,13 @@ def callback():
                     )   # yapf: disable
                 print('A LinebotMachine is created for User {}'.format(event.source.user_id))
 
-            if event.message.text == '我該做什麼' or event.message.text == '我該作什麼':
-                pass
-            else:
-                response = user_machines[event.source.user_id].advance(event)
-                UserState.set_user_state(userid=event.source.user_id, state=user_machines[event.source.user_id].state)
-                print('User {} → {}'.format(event.source.user_id, user_machines[event.source.user_id].state))
+            response = user_machines[event.source.user_id].advance(event)
+            UserState.set_user_state(userid=event.source.user_id, state=user_machines[event.source.user_id].state)
+            print('User {} → {}'.format(event.source.user_id, user_machines[event.source.user_id].state))
 
-                if response == False:
-                    message: str = '很抱歉不太理解您的意思，但我依然會當個忠實的聽眾唷'
-                    line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message))
+            if response == False:
+                message: str = '很抱歉不太理解您的意思，但我依然會當個忠實的聽眾唷'
+                line_bot_api.reply_message(reply_token=event.reply_token, messages=TextSendMessage(text=message))
 
         elif isinstance(event, FollowEvent):
             if event.source.user_id not in user_machines:
@@ -61,10 +58,10 @@ def callback():
                 UserState.set_user_state(userid=event.source.user_id, state=user_machines[event.source.user_id].state)
                 print('A LinebotMachine is created for User {}'.format(event.source.user_id))
             template_message: TemplateSendMessage = TemplateSendMessage(
-                alt_text='Buttons template',
+                alt_text='股市追蹤 - 主選單',
                 template=ButtonsTemplate(
                     title='股市追蹤小幫手',
-                    text='歡迎使用股市追蹤小幫手！請選擇一項功能',
+                    text='歡迎使用股市追蹤小幫手！這是本頻道的主選單，請從這邊開始盡情享受服務吧',
                     actions=user_machines[event.source.user_id].create_main_menu()
                 )
             )
