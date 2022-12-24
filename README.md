@@ -20,6 +20,7 @@
 - Finite State Machine : based on [pytransitions](https://github.com/pytransitions/transitions).
 - Web API : [TWSE Open API](https://openapi.twse.com.tw/) and [FinMind](https://finmind.github.io/).
 - Database : [SQLite](https://www.sqlite.org/index.html) with [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/).
+- Docker : Simplify the deployment procedure with [Docker](https://docs.docker.com/) images and [Docker Compose](https://docs.docker.com/compose/).
 
 ## Finite State Machine in the Linebot
 ![](docs/images/fsm-graph.png)
