@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+    server:
+        container_name: tw_stock_linebot
+        build: .
+        restart: always
+        volumes:
+            - ./data:/workspace/data
+            - ./config.json:/workspace/config.json
+        ports:
+            - 5000:5000

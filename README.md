@@ -25,7 +25,25 @@
 ![](docs/images/fsm-graph.png)
 
 ## Deployment
-
+1. Clone this repository.
+    ```shell
+    $ git clone https://github.com/Jench2103/tw-stock-linebot.git
+    $ cd tw-stock-linebot
+    ```
+2. Create your own `config.json` and fill the parameters.
+    ```shell
+    $ cd /path/to/tw-stock-linebot
+    $ cp config.example.json config.json
+    ```
+3. Execute the server with [Docker Compose](https://docs.docker.com/compose/). The server will be running on port 5000.
+    ```bash
+    $ cd /path/to/tw-stock-linebot
+    $ docker compose up -d
+    ```
+4. Stop the server.
+    ```shell
+    $ docker compose down
+    ```
 
 ## Repository Structure
 ```
